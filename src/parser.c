@@ -1,8 +1,8 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "tokenizer.h"
-#include "parser.h"
+#include "../include/tokenizer.h"
+#include "../include/parser.h"
 
 void expression_destroy(const expression_t e) {
   switch (e.type) {

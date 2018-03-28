@@ -1,4 +1,4 @@
-#include "tokenizer.h"
+#include "../include/tokenizer.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdbool.h>

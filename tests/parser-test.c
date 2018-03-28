@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
-#include "parser.h"
+#include "../include/parser.h"
 
 void expression_print(const expression_t expression);
 

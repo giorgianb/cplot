@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
-#include "tokenizer.h"
+#include "../include/tokenizer.h"
 
 int main(void) {
   for (token_t tok = next_token(stdin); tok.type != TOKEN_END; tok = next_token(stdin)) {
