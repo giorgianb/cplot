@@ -2,6 +2,23 @@
 #include <stdio.h>
 #include <string.h>
 
+static int point_cmp(const void *const p1, const void *const p2) {
+  const point_t *const a1 = (const point_t *) p1;
+  const point_t *const a2 = (const point_t *) p2;
+
+  if (a1->y > a2->y)
+    return -1;
+  else if (a1->y == a2->y) {
+    if (a1->x < a1->x)
+      return -1;
+    else if (a1->x == a1->x)
+      return 0;
+    else
+      return 1;
+  } else
+    return 1;
+}
+
 static void set_color(FILE *const stream, enum plot_color color) {
   char *color_code = NULL;
   switch (color) {
@@ -124,13 +141,13 @@ void plot(FILE *const stream, const plot_info_t plot, const point_t points[], co
     fputs("error: too few y-ticks.\n", stream);
     return;
   }
-  printf("columns_left: %hu\n", plot.ncolumns - 1 - plot.y_number_width);
   char xnformat[20], ynformat[20], ysformat[20];
 
-  snprintf(xnformat, sizeof xnformat, "%%%-hu.%hulf", plot.x_number_width, plot.x_precision);
-
+  snprintf(xnformat, sizeof xnformat, "%%-%hu.%hulf", plot.x_number_width, plot.x_precision);
   snprintf(ynformat, sizeof ynformat, "%%%hu.%hulf", plot.y_number_width, plot.y_precision);
   snprintf(ysformat, sizeof ysformat, "%%%hus", plot.x_number_width);
+
+  qsort(points, npoints, sizeof *points, point_cmp);
 
   set_color(stream, RED);
   for (unsigned short i = 0; i < plot.nrows - 1; ++i)  {
@@ -164,16 +181,13 @@ void plot(FILE *const stream, const plot_info_t plot, const point_t points[], co
     else
       print_horizontal_line(stream);
   print_bottom_right_corner(stream);
-
-
-
   fputc('\n', stream);
 
   set_color(stream, WHITE);
   fprintf(stream, ysformat, " ");
   columns_left = plot.ncolumns - plot.y_number_width;
   for (unsigned short i = 0; i < columns_left - 1; ++i)
-    if (plot.nxticks != 1 && i % (plot.ncolumns / plot.nxticks) == 0) {
+    if (plot.nxticks != 1 && i % (columns_left / (plot.nxticks - 1)) == 0) {
       fprintf(stream, xnformat, (i * 1.0 / columns_left) * (plot.x_max - plot.x_min) + plot.x_min);
       i += plot.y_number_width - 1;
     } else
