@@ -1,6 +1,10 @@
 #include "../include/plot.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#include <stdbool.h>
+#include <assert.h>
 
 static int point_cmp(const void *const p1, const void *const p2) {
   const point_t *const a1 = (const point_t *) p1;
@@ -124,7 +128,12 @@ static inline void print_vertical_line(FILE *const stream) {
   fprintf(stream, "\033(0\x78\033(B");
 }
 
-void plot(FILE *const stream, const plot_info_t plot, const point_t points[], const size_t npoints) {
+bool should_draw_tick(const double n, const double max_n, const unsigned short nticks) {
+  const double ticks_per_n = max_n / (nticks - 1);
+  return floor(n /  ticks_per_n) > floor((n - 1) / ticks_per_n);
+}
+
+void plot(FILE *const stream, const plot_info_t plot, point_t points[], const size_t npoints) {
   if (plot.y_number_width > plot.ncolumns / 5) {
     fputs("Error: specified number width to large.\n", stream);
     return;
@@ -148,17 +157,19 @@ void plot(FILE *const stream, const plot_info_t plot, const point_t points[], co
   snprintf(ysformat, sizeof ysformat, "%%%hus", plot.x_number_width);
 
   qsort(points, npoints, sizeof *points, point_cmp);
+  const unsigned short rows_left = plot.nrows - 1;  /* -1 for the x-axis */
+  const unsigned short rows_per_tick = (rows_left) / (plot.nyticks - 1);
 
-  set_color(stream, RED);
-  for (unsigned short i = 0; i < plot.nrows - 1; ++i)  {
-    if (i == 0) {
+  set_color(stream, WHITE);
+  fprintf(stream, ynformat, plot.y_max * 1.0);
+  set_color(stream, GREEN);
+  print_top_left_corner(stream);
+  fputc('\n', stream);
+  for (unsigned short i = 1; i < rows_left - 1; ++i)  {
+    const double y = ((rows_left - i) * 1.0 / rows_left) * (plot.y_max - plot.y_min) + plot.y_min;
+    if (should_draw_tick(i - rows_left, rows_left, plot.nyticks)) {
       set_color(stream, WHITE);
-      fprintf(stream, ynformat, plot.y_max * 1.0);
-      set_color(stream, GREEN);
-      print_top_left_corner(stream);
-    } else if (plot.nyticks != 1 && i != 0 && i % (plot.nrows / (plot.nyticks - 1)) == 0) {
-      set_color(stream, WHITE);
-      fprintf(stream, ynformat, ((plot.nrows - i) * 1.0 / plot.nrows) * (plot.y_max - plot.y_min) + plot.y_min);
+      fprintf(stream, ynformat, y);
       set_color(stream, GREEN);
       print_right_adjoiner(stream);
     } else {
@@ -172,11 +183,18 @@ void plot(FILE *const stream, const plot_info_t plot, const point_t points[], co
   set_color(stream, WHITE); 
   fprintf(stream, ynformat, plot.y_min * 1.0);
   set_color(stream, GREEN);
+  print_right_adjoiner(stream);
+  fputc('\n', stream);
+  fprintf(stream, ysformat, " ");
   print_bottom_left_corner(stream);
 
-  unsigned short columns_left = plot.ncolumns - 1 - plot.y_number_width;
-  for (unsigned short i = 0; i < columns_left - 1; ++i)
-    if (plot.nxticks != 1 && (i + 1) % ((columns_left + 1) / (plot.nxticks - 1)) == 0)
+
+  set_color(stream, GREEN);
+  print_top_adjoiner(stream);
+  const unsigned short bar_columns_left = plot.ncolumns - 1;
+  const unsigned short columns_per_tick = bar_columns_left / (plot.nxticks - 1);
+  for (unsigned short i = 1; i < bar_columns_left - 1; ++i)
+    if (should_draw_tick(i, columns_left, plot.nxticks))
       print_top_adjoiner(stream);
     else
       print_horizontal_line(stream);
@@ -185,11 +203,12 @@ void plot(FILE *const stream, const plot_info_t plot, const point_t points[], co
 
   set_color(stream, WHITE);
   fprintf(stream, ysformat, " ");
-  columns_left = plot.ncolumns - plot.y_number_width;
+  fputc(' ', stream);
+  const unsigned short columns_left = plot.ncolumns - 1;
   for (unsigned short i = 0; i < columns_left - 1; ++i)
-    if (plot.nxticks != 1 && i % (columns_left / (plot.nxticks - 1)) == 0) {
+    if (i % columns_per_tick == 0 && columns_left - i > columns_per_tick - 1) {
       fprintf(stream, xnformat, (i * 1.0 / columns_left) * (plot.x_max - plot.x_min) + plot.x_min);
-      i += plot.y_number_width - 1;
+      i += plot.x_number_width - 1;
     } else
       fputc(' ', stream);
   fprintf(stream, xnformat, plot.x_max);

@@ -20,7 +20,7 @@ struct point {
 
 typedef struct point point_t;
 
-void plot(FILE *const stream, const plot_info_t plot, const point_t points[], const size_t npoints);
+void plot(FILE *const stream, const plot_info_t plot, point_t points[], const size_t npoints);
 
 enum plot_color {
   BLACK, RED, GREEN, ORANGE, BLUE, PURPLE, CYAN, LIGHT_GRAY, DARK_GRAY, LIGHT_RED, 
