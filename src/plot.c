@@ -164,14 +164,19 @@ static inline bool x_should_draw_tick(const plot_info_t plot, const unsigned sho
 
 static inline bool y_should_skip_point(
     const plot_info_t plot, 
-    const double row, 
+    const unsigned short row, 
     const point_t point) {
 
   const double my = pow(10, plot.y_precision);
   const unsigned short rows_left = plot.nrows - 1;  /* -1 for the x-axis */
   const double upper_y = get_upper_y(plot, row);
 
-  return floor(point.y * my) >= floor(upper_y * my) && !(row == rows_left - 1 && floor(point.y * my) == floor(upper_y * my));
+  bool ret = floor(point.y * my) >= floor(upper_y * my) && !(row == rows_left - 1 && floor(point.y * my) == floor(upper_y * my));
+//  if (ret) 
+//    printf("y-Skipping: %hu: (%g %g) %g: %d\n", row, get_lower_y(plot, row), upper_y, point.y, ret);
+  return ret;
+
+
 }
 
 
@@ -186,8 +191,13 @@ static inline bool x_should_skip_point(
 
   const double lower_y = get_lower_y(plot, row);
   const double lower_x = get_lower_x(plot, column);
-  
-  return floor(point.y * my) >= floor(lower_y * my) && floor(mx * point.x) < floor(mx * lower_x);
+
+  bool ret =  floor(point.y * my) >= floor(lower_y * my) && floor(mx * point.x) < floor(mx * lower_x);
+//  if (ret) 
+//    printf("x-Skipping: (%hu %hu): (%g %g) (%g %g) (%g %g): %d\n", row, column, lower_x, lower_y, get_upper_x(plot, column), get_upper_y(plot, row), point.x, point.y, ret);
+
+  return ret;
+ 
 }
 
 static inline bool x_should_draw_point(
@@ -222,8 +232,8 @@ static inline bool x_should_draw_point(
         || (floor(point.y * my) == floor(upper_y * my)
           && row == rows_left - 1));
 
-//  if (row == rows_left - 2)
-//    printf("(%hu %hu): (%g %g) (%g %g) (%g %g): %d\n", row, column, lower_x, lower_y, upper_x, upper_y, point.x, point.y, ret);
+ /* if (column  == 0)
+    printf("(%hu %hu): (%g %g) (%g %g) (%g %g): %d\n", row, column, lower_x, lower_y, upper_x, upper_y, point.x, point.y, ret); */
 //  printf("(%lf %lf) (%lf %lf) (%g %g) draw: %d\n", lower_x, lower_y, upper_x, upper_y, point.x, point.y, ret);
   return ret;
  
@@ -245,7 +255,7 @@ static size_t draw_column(
       ++index;
 
     if (index < npoints && x_should_draw_point(plot, row, j, points[index])) {
-      set_color(stream, WHITE);
+      set_color(stream, plot.mark_color);
       fputc('X', stream);
       ++index;
     } else
@@ -287,41 +297,43 @@ void plot(FILE *const stream, const plot_info_t p, point_t points[], const size_
   const unsigned short columns_left = p.ncolumns - 1;
   /*
   for (unsigned short i = 0; i < columns_left; ++i)
-    printf("%lf\n", get_lower_x(p, i));
+    printf("%hu: %lf\n", i, get_lower_x(p, i));
   for (unsigned short i = 0; i < rows_left; ++i)
-    printf("%lf\n", get_lower_y(p, i));
+    printf("%hu: %lf\n", i, get_lower_y(p, i));
   */
-  set_color(stream, WHITE);
+  set_color(stream, p.y_number_color);
   fprintf(stream, ynformat, p.y_max * 1.0);
-  set_color(stream, GREEN);
+  set_color(stream, p.line_color);
   print_top_left_corner(stream);
   size_t index = draw_column(stream, p, points, npoints, rows_left - 1, 0);
   for (unsigned short i = 1; i < rows_left - 1; ++i)  {
     const double lower_y = get_lower_y(p, rows_left - 1 - i);
-    if (y_should_draw_tick(p, p.nrows - i - 2)) { set_color(stream, WHITE);
+    if (y_should_draw_tick(p, p.nrows - i - 2)) { 
+      set_color(stream, p.y_number_color);
       fprintf(stream, ynformat, lower_y);
-      set_color(stream, GREEN);
+      set_color(stream, p.line_color);
       print_right_adjoiner(stream);
     } else {
-      set_color(stream, WHITE);
+      set_color(stream, NO_COLOR);
       fprintf(stream, ysformat, " ");
-      set_color(stream, GREEN);
+      set_color(stream, p.line_color);
       print_vertical_line(stream);
     }
     index = draw_column(stream, p, points, npoints, p.nrows - i - 2, index);
   } 
 
-  set_color(stream, WHITE); 
+  set_color(stream, p.y_number_color); 
   fprintf(stream, ynformat, p.y_min * 1.0);
-  set_color(stream, GREEN);
+  set_color(stream, p.line_color);
   print_right_adjoiner(stream);
   index = draw_column(stream, p, points, npoints, 0, index);
 
+  set_color(stream, NO_COLOR);
   fprintf(stream, ysformat, " ");
-  set_color(stream, GREEN);
+  set_color(stream, p.line_color);
   print_bottom_left_corner(stream);
 
-  set_color(stream, GREEN);
+  set_color(stream, p.line_color);
   print_top_adjoiner(stream);
   for (unsigned short i = 1; i < columns_left - 1; ++i)
     if (x_should_draw_tick(p, i))
@@ -331,16 +343,20 @@ void plot(FILE *const stream, const plot_info_t p, point_t points[], const size_
   print_bottom_right_corner(stream);
   fputc('\n', stream);
 
-  set_color(stream, WHITE);
+  set_color(stream, NO_COLOR);
   fprintf(stream, ysformat, " ");
   fputc(' ', stream);
-  for (unsigned short i = 0; i < columns_left; ++i)
+  for (unsigned short i = 0; i < columns_left - 1; ++i)
     if (x_should_draw_tick(p, i)) {
-      const double lower_x = get_lower_x(p, i);
-      fprintf(stream, xnformat, lower_x);
+      set_color(stream, p.x_number_color);
+      fprintf(stream, xnformat, get_lower_x(p, i));
       i += p.x_number_width - 1;
-    } else
+    } else {
+      set_color(stream, NO_COLOR);
       fputc(' ', stream);
+    }
+  set_color(stream, p.x_number_color);
+  fprintf(stream, xnformat, get_lower_x(p, columns_left - 1));
 
   fputc('\n', stream);
   set_color(stream, NO_COLOR);
