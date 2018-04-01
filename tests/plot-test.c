@@ -3,20 +3,20 @@
 
 int main(void) {
   plot_info_t p;
-  p.nrows = 22;
-  p.ncolumns = 61;
+  p.nrows = 6;
+  p.ncolumns = 11;
   p.y_number_width = 8;
   p.y_precision = 3;
-  p.nxticks = 11;
-  p.nyticks = 5;
-  p.y_max = 60;
+  p.nxticks = 6;
+  p.nyticks = 6;
+  p.y_max = 6;
   p.y_min = 0;
-  p.x_max = 60;
+  p.x_max = 6;
   p.x_min = 0;
-  p.x_number_width = 8;
+  p.x_number_width = 3;
   p.x_precision = 3;
 
-  point_t points[61];
+  point_t points[6];
 
   for (size_t i = 0; i < sizeof(points)/sizeof(points[0]); ++i) {
     points[i].x = i;
