@@ -25,7 +25,7 @@ Plotting `sin(x)`:
 `./cplot --expression "sin(x)" --x-min=-6.28 --x-max=6.28 --y-min=-1 --y-max=1`
 
 Plotting parabolic functions:  
-`./cplot --expression "x^2 + 2*x + 1`
+`./cplot --expression "x^2 + 2*x + 1"`
 
 Plotting points from a file:  
 `./cplot --file my-data.dat --x-min=-1000 --x-max=1000 --y-min=-40 --y-max=40
