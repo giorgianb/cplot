@@ -12,7 +12,7 @@
 enum command_line_options {
   file, expression, x_min, x_max, y_min, y_max, x_ticks, y_ticks,
   x_number_color, y_number_color, line_color, mark_color, rows, columns,
-   x_number_width, y_number_width, x_precision, y_precision
+   x_number_width, y_number_width, x_precision, y_precision, mark_char
 };
 
 enum plot_color process_color(const char *const color);
@@ -40,7 +40,8 @@ int main(int argc, char *argv[]) {
     {"x-number-width", required_argument, NULL, x_number_width},
     {"y-number-width", required_argument, NULL, y_number_width},
     {"x-precision", required_argument, NULL, x_precision},
-    {"y-precision", required_argument, NULL, y_precision}
+    {"y-precision", required_argument, NULL, y_precision},
+    {"mark-char", required_argument, NULL, mark_char}
   };
 
   bool read_from_stdin = true;
@@ -61,6 +62,7 @@ int main(int argc, char *argv[]) {
   p.y_number_color = PURPLE;
   p.line_color = BLUE;
   p.mark_color = YELLOW;
+  p.mark_char = 'X';
   p.nrows = 22;
   p.ncolumns = 42;
   p.x_number_width = 8;
@@ -137,15 +139,12 @@ int main(int argc, char *argv[]) {
       case y_precision:
         sscanf(optarg, "%hu", &p.y_precision);
         break;
+      case mark_char:
+        p.mark_char = optarg[0];
+        break;
     }
   }
 
-  /*
-  puts("Options:");
-  printf("nrows: %hu\nncolumns: %hu\nx_number_width: %hu\ny_number_width: %hu\n", p.nrows, p.ncolumns, p.x_number_width, p.y_number_width);
-  printf("x_precision: %hu\ny_precision: %hu\nnxticks: %hu\nnyticks: %hu\n", p.x_precision, p.y_precision, p.nxticks, p.nyticks);
-  printf("x_min: %hu\nx_max: %hu\ny_min: %hu\ny_max: %hu\nmark_color: %hu\n", p.x_min, p.x_max, p.y_min, p.y_max, p.mark_color);
-  printf("line_color: %hu\nx_number_color: %hu\ny_number_color: %hu\n", p.line_color, p.x_number_color, p.y_number_color); */
   if (read_from_stdin) {
     size_t npoints = 0;
     point_t *points = read_points(stdin, &npoints);
@@ -193,7 +192,7 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
 
-    const size_t npoints = 2 * p.ncolumns;
+    const size_t npoints = 50 * p.ncolumns;
     point_t *const points = malloc(npoints * sizeof (*points));
     if (!points) {
       perror("");
@@ -202,7 +201,7 @@ int main(int argc, char *argv[]) {
     for (size_t i = 0; i < npoints; ++i) {
       points[i].x =  i * (p.x_max - p.x_min)/npoints + p.x_min;
       points[i].y = evaluate_expression(exp, points[i].x);
-    }
+    } 
 
     plot(stdout, p, points, npoints);
     free(points);

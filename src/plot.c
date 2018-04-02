@@ -6,23 +6,6 @@
 #include <stdbool.h>
 #include <assert.h>
 
-static int point_cmp(const void *const p1, const void *const p2) {
-  const point_t *const a1 = (const point_t *) p1;
-  const point_t *const a2 = (const point_t *) p2;
-
-  if (a1->y > a2->y)
-    return -1;
-  else if (a1->y == a2->y) {
-    if (a1->x < a2->x)
-      return -1;
-    else if (a1->x == a2->x)
-      return 0;
-    else
-      return 1;
-  } else
-    return 1;
-}
-
 static void set_color(FILE *const stream, enum plot_color color) {
   char *color_code = NULL;
   switch (color) {
@@ -156,48 +139,9 @@ static inline bool y_should_draw_tick(const plot_info_t plot, const unsigned sho
 static inline bool x_should_draw_tick(const plot_info_t plot, const unsigned short column) {
   const unsigned short columns_left = plot.ncolumns - 1;
   const double columns_per_tick = (columns_left + 1.0) / (plot.nxticks - 1);
-  
-  bool ret = floor(column / columns_per_tick) < floor((column + 1) / columns_per_tick) || (column == 0) || column == columns_left - 1;
-//  printf("column: %hu (%d)\n", column, ret);
-  return ret;
-}
 
-static inline bool y_should_skip_point(
-    const plot_info_t plot, 
-    const unsigned short row, 
-    const point_t point) {
-
-  const double my = pow(10, plot.y_precision);
-  const unsigned short rows_left = plot.nrows - 1;  /* -1 for the x-axis */
-  const double upper_y = get_upper_y(plot, row);
-
-  return floor(point.y * my) >= floor(upper_y * my) && !(row == rows_left - 1 && floor(point.y * my) == floor(upper_y * my));
-//  if (ret) 
-//    printf("y-Skipping: %hu: (%g %g) (%g %g): %d\n", row, get_lower_y(plot, row), upper_y, point.x, point.y, ret);
-//  return ret;
-
-
-}
-
-
-static inline bool x_should_skip_point(
-    const plot_info_t plot, 
-    const unsigned short row, 
-    const unsigned short column, 
-    const point_t point) {
-
-  const double mx = pow(10, plot.x_precision);
-  const double my = pow(10, plot.y_precision);
-
-  const double lower_y = get_lower_y(plot, row);
-  const double lower_x = get_lower_x(plot, column);
-
-  return floor(point.y * my) >= floor(lower_y * my) && floor(mx * point.x) < floor(mx * lower_x);
-//  if (ret) 
-//    printf("x-Skipping: (%hu %hu): (%g %g) (%g %g) (%g %g): %d\n", row, column, lower_x, lower_y, get_upper_x(plot, column), get_upper_y(plot, row), point.x, point.y, ret);
-
-//  return ret;
- 
+  return floor(column / columns_per_tick) < floor((column + 1) / columns_per_tick) 
+    || (column == 0) || column == columns_left - 1;
 }
 
 static inline bool x_should_draw_point(
@@ -218,12 +162,7 @@ static inline bool x_should_draw_point(
   const double lower_x = get_lower_x(plot, column);
   const double upper_x = get_upper_x(plot, column);
 
-  /* if (index < npoints && points[index].y >= lower_y && points[index].x >= lower_x
-     && (points[index].x < upper_x || (points[index].x == upper_x && j == columns_left - 1))
-     && points[index].y < upper_y) { */
-
-
-  bool ret =  floor(point.y * my) >= floor(lower_y * my) 
+  return floor(point.y * my) >= floor(lower_y * my) 
     && floor(point.x * mx) >= floor(lower_x * mx)
     && (floor(point.x * mx) < floor(upper_x * mx)
         || (floor(point.x * mx) == floor(upper_x * mx)
@@ -231,12 +170,6 @@ static inline bool x_should_draw_point(
     && (floor(point.y * my) < floor(upper_y * my)
         || (floor(point.y * my) == floor(upper_y * my)
           && row == rows_left - 1));
-
- /* if (column  == 0)
-    printf("(%hu %hu): (%g %g) (%g %g) (%g %g): %d\n", row, column, lower_x, lower_y, upper_x, upper_y, point.x, point.y, ret); */
-//  printf("(%lf %lf) (%lf %lf) (%g %g) draw: %d\n", lower_x, lower_y, upper_x, upper_y, point.x, point.y, ret);
-  return ret;
- 
 }
 
 static size_t draw_column(
@@ -247,18 +180,17 @@ static size_t draw_column(
     const unsigned short row, 
     size_t index) {
   const unsigned short columns_left = plot.ncolumns - 1;
-  while (index < npoints && y_should_skip_point(plot, row, points[index])) 
-    ++index;
 
-  for (unsigned short j = 0; j < columns_left && index < npoints; ++j) {
-    while (index < npoints && x_should_skip_point(plot, row, j, points[index]))
-      ++index;
+  for (unsigned short j = 0; j < columns_left; ++j) {
+    bool drew = false;
+    for (size_t i = 0; i < npoints && !drew; ++i)
+      if (x_should_draw_point(plot, row, j, points[i])) {
+        set_color(stream, plot.mark_color);
+        fputc(plot.mark_char, stream);
+        drew = true;
+      }
 
-    if (index < npoints && x_should_draw_point(plot, row, j, points[index])) {
-      set_color(stream, plot.mark_color);
-      fputc('X', stream);
-      ++index;
-    } else
+    if (!drew)
       fputc(' ', stream);
   }
 
@@ -284,20 +216,15 @@ void plot(FILE *const stream, const plot_info_t p, point_t points[], const size_
   char xnformat[20], ynformat[20], ysformat[20];
 
 
+  // TODO: figure out string lengths
   snprintf(xnformat, sizeof xnformat, "%%-%hu.%hulf", p.x_number_width, p.x_precision);
   snprintf(ynformat, sizeof ynformat, "%%%hu.%hulf", p.y_number_width, p.y_precision);
   snprintf(ysformat, sizeof ysformat, "%%%hus", p.y_number_width);
 
-  qsort(points, npoints, sizeof *points, point_cmp);
 
   const unsigned short rows_left = p.nrows - 1;
   const unsigned short columns_left = p.ncolumns - 1;
-  /*
-  for (unsigned short i = 0; i < columns_left; ++i)
-    printf("%hu: %lf\n", i, get_lower_x(p, i));
-  for (unsigned short i = 0; i < rows_left; ++i)
-    printf("%hu: %lf\n", i, get_lower_y(p, i));
-  */
+
   set_color(stream, p.y_number_color);
   fprintf(stream, ynformat, p.y_max * 1.0);
   set_color(stream, p.line_color);

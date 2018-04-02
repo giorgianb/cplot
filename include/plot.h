@@ -16,6 +16,7 @@ struct plot_info {
   double y_min, y_max;
 
   enum plot_color mark_color;
+  char mark_char;
   enum plot_color line_color;
   enum plot_color x_number_color;
   enum plot_color y_number_color;
