@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "../include/plot.h"
-#include "../include/parser.h"
+#include "plotter.h"
+#include "parser.h"
 
 #define NELEMS(arr) (sizeof(arr)/sizeof(arr[0]))
 
@@ -59,10 +59,10 @@ int main(int argc, char *argv[]) {
   p.nxticks = 6;
   p.nyticks = 6;
   p.x_number_color = RED;
-  p.y_number_color = PURPLE;
-  p.line_color = BLUE;
-  p.mark_color = YELLOW;
-  p.mark_char = 'X';
+  p.y_number_color = BLUE;
+  p.line_color = GREEN;
+  p.mark_color = WHITE;
+  p.mark_char = '+';
   p.nrows = 22;
   p.ncolumns = 42;
   p.x_number_width = 8;

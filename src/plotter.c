@@ -1,4 +1,4 @@
-#include "../include/plot.h"
+#include "plotter.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
