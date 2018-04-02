@@ -227,7 +227,7 @@ void plot(FILE *const stream, const plot_info_t p, point_t points[], const size_
 
   set_color(stream, p.y_number_color);
   fprintf(stream, ynformat, p.y_max * 1.0);
-  set_color(stream, p.line_color);
+  set_color(stream, p.axes_color);
   print_top_left_corner(stream);
   size_t index = draw_column(stream, p, points, npoints, rows_left - 1, 0);
   for (unsigned short i = 1; i < rows_left - 1; ++i)  {
@@ -235,12 +235,12 @@ void plot(FILE *const stream, const plot_info_t p, point_t points[], const size_
     if (y_should_draw_tick(p, p.nrows - i - 2)) { 
       set_color(stream, p.y_number_color);
       fprintf(stream, ynformat, lower_y);
-      set_color(stream, p.line_color);
+      set_color(stream, p.axes_color);
       print_right_adjoiner(stream);
     } else {
       set_color(stream, NO_COLOR);
       fprintf(stream, ysformat, " ");
-      set_color(stream, p.line_color);
+      set_color(stream, p.axes_color);
       print_vertical_line(stream);
     }
     index = draw_column(stream, p, points, npoints, p.nrows - i - 2, index);
@@ -248,16 +248,16 @@ void plot(FILE *const stream, const plot_info_t p, point_t points[], const size_
 
   set_color(stream, p.y_number_color); 
   fprintf(stream, ynformat, p.y_min * 1.0);
-  set_color(stream, p.line_color);
+  set_color(stream, p.axes_color);
   print_right_adjoiner(stream);
   index = draw_column(stream, p, points, npoints, 0, index);
 
   set_color(stream, NO_COLOR);
   fprintf(stream, ysformat, " ");
-  set_color(stream, p.line_color);
+  set_color(stream, p.axes_color);
   print_bottom_left_corner(stream);
 
-  set_color(stream, p.line_color);
+  set_color(stream, p.axes_color);
   print_top_adjoiner(stream);
   for (unsigned short i = 1; i < columns_left - 1; ++i)
     if (x_should_draw_tick(p, i))

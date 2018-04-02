@@ -11,8 +11,8 @@
 
 enum command_line_options {
   file, expression, x_min, x_max, y_min, y_max, x_ticks, y_ticks,
-  x_number_color, y_number_color, line_color, mark_color, rows, columns,
-   x_number_width, y_number_width, x_precision, y_precision, mark_char
+  x_number_color, y_number_color, axes_color, mark_color, rows, columns,
+   x_number_width, y_number_width, x_precision, y_precision, mark_char, help
 };
 
 enum plot_color process_color(const char *const color);
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     {"y-ticks", required_argument, NULL, y_ticks},
     {"x-number-color", required_argument, NULL, x_number_color},
     {"y-number-color", required_argument, NULL, y_number_color},
-    {"line-color", required_argument, NULL, line_color},
+    {"axes-color", required_argument, NULL, axes_color},
     {"mark-color", required_argument, NULL, mark_color},
     {"rows", required_argument, NULL, rows},
     {"columns", required_argument, NULL, columns},
@@ -41,7 +41,8 @@ int main(int argc, char *argv[]) {
     {"y-number-width", required_argument, NULL, y_number_width},
     {"x-precision", required_argument, NULL, x_precision},
     {"y-precision", required_argument, NULL, y_precision},
-    {"mark-char", required_argument, NULL, mark_char}
+    {"mark-char", required_argument, NULL, mark_char},
+    {"help", no_argument, NULL, help}
   };
 
   bool read_from_stdin = true;
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]) {
   p.nyticks = 6;
   p.x_number_color = RED;
   p.y_number_color = BLUE;
-  p.line_color = GREEN;
+  p.axes_color = GREEN;
   p.mark_color = WHITE;
   p.mark_char = '+';
   p.nrows = 22;
@@ -115,8 +116,8 @@ int main(int argc, char *argv[]) {
       case y_number_color:
         p.y_number_color = process_color(optarg);
         break;
-      case line_color:
-        p.line_color = process_color(optarg);
+      case axes_color:
+        p.axes_color = process_color(optarg);
         break;
       case mark_color:
         p.mark_color = process_color(optarg);
@@ -142,6 +143,39 @@ int main(int argc, char *argv[]) {
       case mark_char:
         p.mark_char = optarg[0];
         break;
+      case help: {
+        static const char *const help_message = 
+          "--file, --file=\t\t\t\tread and plot points from a file.\n"
+          "--expression, --expression=\t\tgenerate points from given expression.\n"
+          "--x-min, --x-min=\t\t\tspecify minimum x-value.\n"
+          "--x-max, --x-max=\t\t\tspecify maximum x-value.\n"
+          "--y-min, --y-min=\t\t\tspecify minimum y-value.\n"
+          "--y-max, --y-max=\t\t\tspecify maximum y-value\n"
+          "--x-ticks, --x-ticks=\t\t\tspecify number of x-axis ticks.\n"
+          "--y-ticks, --y-ticks=\t\t\tspecify number of y-axis ticks.\n"
+          "--x-number-color, --x-number-color=\tspecify color used to print tick labels on x-axis.\n"
+          "--y-number-color, --y-number-color=\tspecify color used to print tick labels on y-axis.\n"
+          "--axes-color, --axes-color=\t\tspecify color used to print axes.\n"
+          "--mark-color, --mark-color=\t\tspecify color used to print marks on plot.\n"
+          "--rows, --rows=\t\t\t\tspecify number of rows y-axis uses.\n"
+          "--columns, --columns=\t\t\tspecify number of columns x-axis uses.\n"
+          "--x-number-width, --x-number-width=\tspecify width of tick labels on x-axis.\n"
+          "--y-number-width, --y-number-width=\tspecify width of tick labels on y-axis.\n"
+          "--x-precision, --x-precision=\t\tspecify number of decimal points to use when printing x-axis tick labels.\n"
+          "--y-precision, --y-precision=\t\tspecify number of decimal points to use when printing y-axis tick labels.\n"
+          "--mark-char, --mark-char=\t\tspecify marker character to use on plot.\n"
+          "--help\t\t\t\t\tprint this message.\n\n\n"
+          "The following colors may be passed to arguments requiring colors:\n"
+          "black red green orange blue purple cyan ligh-gray dark-gray light-red light-green yellow light-blue light-purple "
+          "light-cyan white no-color\n\n"
+          "By default, if neither --file or --expression is specified, points are read from standard input.";
+
+
+
+        puts(help_message);
+        exit(EXIT_SUCCESS);
+        break;
+      }
     }
   }
 
