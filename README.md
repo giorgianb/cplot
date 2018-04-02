@@ -1,7 +1,11 @@
 # cplot
 
 ## Building
-`make`
+```
+git clone https://github.com/giorgianb/cplot
+cd cplot
+make
+```
 
 ## Using
 
