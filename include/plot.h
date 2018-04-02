@@ -11,7 +11,7 @@ struct plot_info {
   unsigned short nrows, ncolumns;
   unsigned short x_number_width, y_number_width;
   unsigned short x_precision, y_precision;
-  unsigned nxticks, nyticks;
+  unsigned short nxticks, nyticks;
   double x_min, x_max;
   double y_min, y_max;
 

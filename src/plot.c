@@ -13,9 +13,9 @@ static int point_cmp(const void *const p1, const void *const p2) {
   if (a1->y > a2->y)
     return -1;
   else if (a1->y == a2->y) {
-    if (a1->x < a1->x)
+    if (a1->x < a2->x)
       return -1;
-    else if (a1->x == a1->x)
+    else if (a1->x == a2->x)
       return 0;
     else
       return 1;
@@ -171,10 +171,10 @@ static inline bool y_should_skip_point(
   const unsigned short rows_left = plot.nrows - 1;  /* -1 for the x-axis */
   const double upper_y = get_upper_y(plot, row);
 
-  bool ret = floor(point.y * my) >= floor(upper_y * my) && !(row == rows_left - 1 && floor(point.y * my) == floor(upper_y * my));
+  return floor(point.y * my) >= floor(upper_y * my) && !(row == rows_left - 1 && floor(point.y * my) == floor(upper_y * my));
 //  if (ret) 
-//    printf("y-Skipping: %hu: (%g %g) %g: %d\n", row, get_lower_y(plot, row), upper_y, point.y, ret);
-  return ret;
+//    printf("y-Skipping: %hu: (%g %g) (%g %g): %d\n", row, get_lower_y(plot, row), upper_y, point.x, point.y, ret);
+//  return ret;
 
 
 }
@@ -192,11 +192,11 @@ static inline bool x_should_skip_point(
   const double lower_y = get_lower_y(plot, row);
   const double lower_x = get_lower_x(plot, column);
 
-  bool ret =  floor(point.y * my) >= floor(lower_y * my) && floor(mx * point.x) < floor(mx * lower_x);
+  return floor(point.y * my) >= floor(lower_y * my) && floor(mx * point.x) < floor(mx * lower_x);
 //  if (ret) 
 //    printf("x-Skipping: (%hu %hu): (%g %g) (%g %g) (%g %g): %d\n", row, column, lower_x, lower_y, get_upper_x(plot, column), get_upper_y(plot, row), point.x, point.y, ret);
 
-  return ret;
+//  return ret;
  
 }
 
@@ -283,9 +283,6 @@ void plot(FILE *const stream, const plot_info_t p, point_t points[], const size_
   }
   char xnformat[20], ynformat[20], ysformat[20];
 
-  /* hack to fix later */
-//  plot_info_t p = plot;
-//  --p.nrows;
 
   snprintf(xnformat, sizeof xnformat, "%%-%hu.%hulf", p.x_number_width, p.x_precision);
   snprintf(ynformat, sizeof ynformat, "%%%hu.%hulf", p.y_number_width, p.y_precision);

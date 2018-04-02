@@ -39,8 +39,8 @@ token_t next_token(FILE *const stream) {
       if (pos >= size) {
         size *= 2;
         char *const new_buf = realloc(tok.s, size);
-        free(tok.s);
         if (!new_buf) {
+          free(tok.s);
           tok.type = TOKEN_ERROR;
           return tok; /* let user examine errno to determine that there was no more memory */
         }
@@ -53,8 +53,8 @@ token_t next_token(FILE *const stream) {
     if (pos >= size) {
       size += sizeof(*tok.s);
       char *const new_buf = realloc(tok.s, size);
-      free(tok.s);
       if (!new_buf) {
+        free(tok.s);
         tok.type = TOKEN_ERROR;
         return tok; /* let user examine errno to determine that there was no more memory */
       }
