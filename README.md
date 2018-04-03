@@ -63,7 +63,7 @@ Plotting points from another program:
 
 
 The following colors may be passed to arguments requiring colors:
-black red green orange blue purple cyan ligh-gray dark-gray light-red light-green yellow light-blue light-purple light-cyan white no-color
+black red green orange blue purple cyan light-gray dark-gray light-red light-green yellow light-blue light-purple light-cyan white no-color
 
 By default, if neither --file or --expression is specified, points are read from standard input.
 ```
