@@ -6,6 +6,23 @@
 #include <stdbool.h>
 #include <assert.h>
 
+static int point_cmp(const void *const p1, const void *const p2) {
+  const point_t *const a1 = (const point_t *) p1;
+  const point_t *const a2 = (const point_t *) p2;
+
+  if (a1->y > a2->y)
+    return -1;
+  else if (a1->y == a2->y) {
+    if (a1->x < a2->x)
+      return -1;
+    else if (a1->x == a2->x)
+      return 0;
+    else
+      return 1;
+  } else
+    return 1;
+}
+
 static void set_color(FILE *const stream, enum plot_color color) {
   char *color_code = NULL;
   switch (color) {
@@ -148,7 +165,8 @@ static inline bool x_should_draw_point(
     const plot_info_t plot, 
     const unsigned short row, 
     const unsigned short column, 
-    const point_t point) {
+    const point_t point
+    ) {
 
   const double mx = pow(10, plot.x_precision);
   const double my = pow(10, plot.y_precision);
@@ -172,6 +190,29 @@ static inline bool x_should_draw_point(
           && row == rows_left - 1));
 }
 
+static inline bool y_should_skip_point(
+    const plot_info_t plot, 
+    const unsigned short row, 
+    const point_t point
+    ) {
+  const double my = pow(10, plot.y_precision);
+  const unsigned short rows_left = plot.nrows - 1;  /* -1 for the x-axis */
+  const double upper_y = get_upper_y(plot, row);
+
+  return floor(point.y * my) >= floor(upper_y * my) && !(row == rows_left - 1 && floor(point.y * my) == floor(upper_y * my));
+}
+
+static inline bool past_end_point(
+    const plot_info_t plot, 
+    const unsigned short row, 
+    const point_t point
+    ) {
+  const double my = pow(10, plot.y_precision);
+  const double lower_y = get_lower_y(plot, row);
+
+  return floor(point.y * my) < floor(lower_y * my);
+}
+
 static size_t draw_column(
     FILE *const stream,
     const plot_info_t plot, 
@@ -181,9 +222,12 @@ static size_t draw_column(
     size_t index) {
   const unsigned short columns_left = plot.ncolumns - 1;
 
+  while (index < npoints && y_should_skip_point(plot, row, points[index]))
+    ++index;
+
   for (unsigned short j = 0; j < columns_left; ++j) {
     bool drew = false;
-    for (size_t i = 0; i < npoints && !drew; ++i)
+    for (size_t i = index; i < npoints && !drew && !past_end_point(plot, row, points[i]); ++i)
       if (x_should_draw_point(plot, row, j, points[i])) {
         set_color(stream, plot.mark_color);
         fputc(plot.mark_char, stream);
@@ -224,6 +268,8 @@ void plot(FILE *const stream, const plot_info_t p, point_t points[], const size_
 
   const unsigned short rows_left = p.nrows - 1;
   const unsigned short columns_left = p.ncolumns - 1;
+
+  qsort(points, npoints, sizeof *points, point_cmp); 
 
   set_color(stream, p.y_number_color);
   fprintf(stream, ynformat, p.y_max * 1.0);
