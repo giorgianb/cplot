@@ -21,6 +21,11 @@ double evaluate_expression(const expression_t exp, const double x);
 bool check_parser_errors(const expression_t exp);
 bool check_variables(const expression_t  exp);
 
+double find_x_min(const point_t *const points, const size_t npoints);
+double find_x_max(const point_t *const points, const size_t npoints);
+double find_y_min(const point_t *const points, const size_t npoints);
+double find_y_max(const point_t *const points, const size_t npoints);
+
 int main(int argc, char *argv[]) {
   static struct option long_options[] = {
     {"file", required_argument, NULL, file},
@@ -50,6 +55,8 @@ int main(int argc, char *argv[]) {
   char *file_name = NULL;
   bool from_expression = false;
   char *source_expression = NULL;
+  bool x_min_set = false, x_max_set = false;
+  bool y_min_set = false, y_max_set = false;
 
   plot_info_t p;
 
@@ -93,15 +100,19 @@ int main(int argc, char *argv[]) {
         break;
       case x_min:
         sscanf(optarg,"%lf", &p.x_min);
+        x_min_set = true;
         break;
       case x_max:
         sscanf(optarg, "%lf", &p.x_max);
+        x_max_set = true;
         break;
       case y_min:
         sscanf(optarg, "%lf", &p.y_min);
+        y_min_set = true;
         break;
       case y_max:
         sscanf(optarg, "%lf", &p.y_max);
+        y_max_set = true;
         break;
       case x_ticks:
         sscanf(optarg, "%hu", &p.nxticks);
@@ -179,33 +190,32 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  size_t npoints;
+  point_t *points = NULL;
   if (read_from_stdin) {
-    size_t npoints = 0;
-    point_t *points = read_points(stdin, &npoints);
+    npoints = 0;
+    points = read_points(stdin, &npoints);
     if (!points) {
       perror("");
       exit(EXIT_FAILURE);
     }
 
-    plot(stdout, p, points, npoints);
-    free(points);
   } else if (read_from_file) {
-    size_t npoints = 0;
-    FILE *file = fopen(file_name, "r");
+    FILE *const file = fopen(file_name, "r");
     if (!file) {
       perror("");
       exit(EXIT_FAILURE);
     }
-    point_t *points = read_points(file, &npoints);
+
+    npoints = 0;
+    points = read_points(file, &npoints);
     if (!points) {
       fclose(file);
       perror("");
       exit(EXIT_FAILURE);
     }
 
-    plot(stdout, p, points, npoints);
     fclose(file);
-    free(points);
   } else if (from_expression) {
     FILE *const file = fmemopen(source_expression, strlen(source_expression), "r");
     if (!file) {
@@ -226,22 +236,35 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
 
-    const size_t npoints = 50 * p.ncolumns;
-    point_t *const points = malloc(npoints * sizeof (*points));
+    npoints = 50 * p.ncolumns;
+    points = malloc(npoints * sizeof (*points));
     if (!points) {
       perror("");
       fclose(file);
     }
+    
+    x_min_set = true;
+    x_max_set = true;
     for (size_t i = 0; i < npoints; ++i) {
       points[i].x =  i * (p.x_max - p.x_min)/npoints + p.x_min;
       points[i].y = evaluate_expression(exp, points[i].x);
     } 
 
-    plot(stdout, p, points, npoints);
-    free(points);
     expression_destroy(exp);
     fclose(file);
   }
+
+  if (!x_min_set)
+    p.x_min = find_x_min(points, npoints);
+  if (!x_max_set)
+    p.x_max = find_x_max(points, npoints);
+  if (!y_min_set)
+    p.y_min = find_y_min(points, npoints);
+  if (!y_max_set)
+    p.y_max = find_y_max(points, npoints);
+
+  plot(stdout, p, points, npoints);
+  free(points);
 
   exit(EXIT_SUCCESS);
 }
@@ -384,4 +407,52 @@ double evaluate_expression(const expression_t exp, const double x) {
     default:
       return 0;
   }
+}
+
+double find_x_min(const point_t *const points, const size_t npoints) {
+  if (npoints > 0) {
+    double min = points[0].x;
+    for (size_t i = 1; i < npoints; ++i)
+      min = (points[i].x < min) ? points[i].x : min;
+
+    return min;
+  }
+
+  return -10;
+}
+
+double find_x_max(const point_t *const points, const size_t npoints) {
+  if (npoints > 0) {
+    double max = points[0].x;
+    for (size_t i = 1; i < npoints; ++i)
+      max = (points[i].x > max) ? points[i].x : max;
+
+    return max;
+  }
+
+  return 10;
+}
+
+double find_y_min(const point_t *const points, const size_t npoints) {
+  if (npoints > 0) {
+    double min = points[0].y;
+    for (size_t i = 1; i < npoints; ++i)
+      min = (points[i].y < min) ? points[i].y : min;
+
+    return min;
+  }
+
+  return -10;
+}
+
+double find_y_max(const point_t *const points, const size_t npoints) {
+  if (npoints > 0) {
+    double max = points[0].y;
+    for (size_t i = 1; i < npoints; ++i)
+      max = (points[i].y > max) ? points[i].y : max;
+
+    return max;
+  }
+
+  return 10;
 }
