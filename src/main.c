@@ -27,7 +27,7 @@ double find_y_min(const point_t *const points, const size_t npoints);
 double find_y_max(const point_t *const points, const size_t npoints);
 
 int main(int argc, char *argv[]) {
-  static struct option long_options[] = {
+  const static struct option long_options[] = {
     {"file", required_argument, NULL, file},
     {"expression", required_argument, NULL, expression},
     {"x-min", required_argument, NULL, x_min},
