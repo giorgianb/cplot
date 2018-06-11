@@ -296,15 +296,15 @@ process_color (const char *const color)
 {
   const char *colors_text[] = {
     "black", "red", "green", "orange", "blue", "purple", "cyan", "light-gray",
-      "dark-gray", "light-red",
+    "dark-gray", "light-red",
     "light-green", "yellow", "light-blue", "light-purple", "light-cyan",
-      "white", "no-color"
+    "white", "no-color"
   };
 
   enum plot_color colors[] =
   {
     BLACK, RED, GREEN, ORANGE, BLUE, PURPLE, CYAN, LIGHT_GRAY, DARK_GRAY,
-      LIGHT_RED,
+    LIGHT_RED,
     LIGHT_GREEN, YELLOW, LIGHT_BLUE, LIGHT_PURPLE, LIGHT_CYAN, WHITE, NO_COLOR
   };
 
@@ -431,8 +431,8 @@ evaluate_expression (const expression_t exp, const double x)
   switch (exp.type)
     {
     case EXPRESSION_FUNCTION:
-      return get_trig_function (exp.
-				s) (evaluate_expression (exp.operands[0], x));
+      return
+	get_trig_function (exp.s) (evaluate_expression (exp.operands[0], x));
       break;
     case EXPRESSION_OPERATOR:
       switch (exp.operator)
