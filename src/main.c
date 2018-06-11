@@ -50,7 +50,8 @@ main (int argc, char *argv[])
     {"x-precision", required_argument, NULL, x_precision},
     {"y-precision", required_argument, NULL, y_precision},
     {"mark-char", required_argument, NULL, mark_char},
-    {"help", no_argument, NULL, help}
+    {"help", no_argument, NULL, help},
+    {0, 0, 0, 0}
   };
 
   bool read_from_stdin = true;
